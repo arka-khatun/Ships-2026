@@ -9,15 +9,17 @@ namespace GA.Collections
 		{
 			public T Value { get; set; }
 			public Node Next { get; set; }
+			public Node Previous { get; set; }
 
 			public Node() : this(default(T))
 			{
 			}
 
-			public Node(T value, Node next = null)
+			public Node(T value, Node previous = null, Node next = null)
 			{
 				Value = value;
 				Next = next;
+				Previous = previous;
 			}
 		}
 
@@ -25,6 +27,12 @@ namespace GA.Collections
 		/// The head of the linked list. When the list is empty, this will be null.
 		/// </summary>
 		protected Node Head { get; set; } = null;
+		
+		/// <summary>
+		/// The tail of the linked list. When the list is empty, this will be null.
+		/// Reference to the tail allows Add() add new items straight to the end of the list.
+		/// </summary>
+		protected Node Tail { get; set; } = null;
 
 		public int Count { get; private set; } = 0;
 
@@ -37,7 +45,7 @@ namespace GA.Collections
 				throw new System.NotSupportedException("The collection is read-only.");
 			}
 
-			Node node = new Node(item);
+			Node node = new Node(item, previous: Tail);
 
 			if (Head == null)
 			{
@@ -45,15 +53,10 @@ namespace GA.Collections
 			}
 			else
 			{
-				Node current = Head;
-				while (current.Next != null)
-				{
-					current = current.Next;
-				}
-
-				current.Next = node;
+				Tail.Next = node;
 			}
 
+			Tail = node;
 			Count++;
 		}
 
@@ -65,6 +68,7 @@ namespace GA.Collections
 			}
 
 			Head = null;
+			Tail = null;
 			Count = 0;
 		}
 
@@ -107,33 +111,47 @@ namespace GA.Collections
 			}
 
 			Node current = Head;
-			Node previous = null;
 
 			while (current != null)
 			{
 				if (EqualityComparer<T>.Default.Equals(current.Value, item))
 				{
-					if (previous != null)
-					{
-						// Removing any other element than the first.
-						previous.Next = current.Next;
-					}
-					else
-					{
-						// Removing the first element.
-						Head = current.Next;
-					}
-
-					Count--;
+					RemoveNode(current);
 					return true;
 				}
 
-				previous = current;
 				current = current.Next;
 			}
 
 			return false;
 		}
+
+		/// <summary>
+		/// Remove a node and unlink it from the list. Fix both previous and next.
+		/// </summary>
+		private void RemoveNode(Node node)
+		{
+			if (node.Previous != null)
+				{
+					node.Previous.Next = node.Next;
+				}
+			else
+			{
+				Head = node.Next;
+			}
+			
+			if (node.Next != null)
+				{
+					node.Next.Previous = node.Previous;
+				}
+			else
+				{
+				Tail = node.Previous;
+				}
+			
+			Count--;
+		}
+
 
 		IEnumerator IEnumerable.GetEnumerator()
 		{
