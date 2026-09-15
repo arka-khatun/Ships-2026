@@ -132,22 +132,22 @@ namespace GA.Collections
 		private void RemoveNode(Node node)
 		{
 			if (node.Previous != null)
-				{
-					node.Previous.Next = node.Next;
-				}
+			{
+				node.Previous.Next = node.Next;
+			}
 			else
 			{
 				Head = node.Next;
 			}
 			
 			if (node.Next != null)
-				{
-					node.Next.Previous = node.Previous;
-				}
+			{
+				node.Next.Previous = node.Previous;
+			}
 			else
-				{
+			{
 				Tail = node.Previous;
-				}
+			}
 			
 			Count--;
 		}
