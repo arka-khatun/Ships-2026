@@ -68,7 +68,7 @@ namespace GA.Ships.Pathfinding
 			return null;
 		}
 
-		public IList<Cell> GetReachableCells(Cell start, int maxSteps)
+		public IList<Cell> GetReachableCells(Cell start, int maxSteps, bool includeDiagonal)
 		{
 			Queue<Cell> frontier = new Queue<Cell>();
 			Dictionary<Cell, (Cell, int)> cameFrom = new Dictionary<Cell, (Cell, int)>();
@@ -90,7 +90,7 @@ namespace GA.Ships.Pathfinding
 					break;
 				}
 
-				IList<Cell> neighbours = _grid.GetNeighbours(current, includeDiagonal: false);
+				IList<Cell> neighbours = _grid.GetNeighbours(current, includeDiagonal: includeDiagonal);
 				foreach (Cell neighbour in neighbours)
 				{
 					if (neighbour.IsWalkable && !cameFrom.ContainsKey(neighbour))
