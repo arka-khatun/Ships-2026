@@ -20,6 +20,11 @@ namespace GA.Ships
 			private set;
 		}
 
+		public NavigationGrid Grid
+		{
+			get { return _grid; }
+		}
+
 		public Level()
 		{
 			_current = this;

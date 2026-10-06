@@ -32,6 +32,7 @@ namespace GA.Ships.Pathfinding
 		public int Height => GridSize.Y / CellSize;
 
 		private Cell[,] _cells;
+		private HashSet<Cell> _highlightedCells = new HashSet<Cell>();
 
 		private MeshInstance3D _debugGridMesh;
 
@@ -39,6 +40,17 @@ namespace GA.Ships.Pathfinding
 		{
 			// Initialize the grid;
 			BuildGraph();
+			RefreshDebugGrid();
+		}
+
+		public void SetHighlightedCells(IEnumerable<Cell> cells)
+		{
+			if (cells == null)
+			{
+				throw new ArgumentNullException(nameof(cells));
+			}
+
+			_highlightedCells = new HashSet<Cell>(cells);
 			RefreshDebugGrid();
 		}
 
@@ -210,7 +222,9 @@ namespace GA.Ships.Pathfinding
 				for (int x = 0; x < Width; x++)
 				{
 					Cell cell = _cells[x, y];
-					Color color = GetNodeColor(cell.Cost, cell.IsWalkable);
+					Color color = _highlightedCells.Contains(cell)
+						? new Color(1.0f, 0.72f, 0.1f, 1.0f)
+						: GetNodeColor(cell.Cost, cell.IsWalkable);
 					float half = CellSize * 0.5f;
 					Vector3 offset = cell.WorldPosition - GlobalPosition;
 					Vector3 a = new Vector3(offset.X - half, 0.02f, offset.Z - half);

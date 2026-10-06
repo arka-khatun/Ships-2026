@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" uid="uid://dal2ry4e6ijio" path="res://Scenes/LevelObjects/Rock2.tscn" id="8_6jj8j"]
 [ext_resource type="PackedScene" uid="uid://gb82qf7sjrcg" path="res://Scenes/LevelObjects/Rock3.tscn" id="9_06um6"]
 [ext_resource type="Script" uid="uid://dw0x1ywrm177y" path="res://Code/Pathfinding/NavigationGrid.cs" id="10_bdlbp"]
+[ext_resource type="Script" uid="uid://dfgn7obpkuywd" path="res://Code/Pathfinding/Testing/PathfindingDistance.cs" id="12_rpty4"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_3vykb"]
 
@@ -450,3 +451,7 @@ DrawDebugGrid = true
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=1385627526]
 transform = Transform3D(1, 0, 0, 0, -0.11524884, 0.9933367, 0, -0.9933367, -0.11524884, 0, 11.518807, -47.70407)
+
+[node name="DistanceTest" type="Node3D" parent="." unique_id=2140708446]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.031498, 0, 3.2909489)
+script = ExtResource("12_rpty4")
