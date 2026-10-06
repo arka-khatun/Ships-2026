@@ -13,7 +13,7 @@ dest_files=["res://.godot/imported/patch-sand.glb-21257a2d9a0dfefc5253d98a7fb5fd
 
 [params]
 
-nodes/root_type=""
+nodes/root_type="StaticBody3D"
 nodes/root_name=""
 nodes/root_script=null
 mesh_library/use_node_names_as_mesh_names=false
