@@ -51,24 +51,24 @@ namespace GA.Ships.Navigation
 		{
 			Stopwatch stopwatch = new Stopwatch();
 			stopwatch.Start();
-			// switch (_algorithm)
-			// {
-			// 	case PathfinderAlgorithm.BreadthFirstSearch:
-			// 		// Call the Breadth First Search method here
-			// 		_currentPath = Level.Current.Pathfinder.BreadtFirstSearch(GlobalPosition, _targetNode.GlobalPosition);
-			// 		break;
-			// 	case PathfinderAlgorithm.Dijkstra:
-			// 		// Call the Dijkstra method here
-			// 		_currentPath = Level.Current.Pathfinder.Dijkstra(GlobalPosition, _targetNode.GlobalPosition);
-			// 		break;
-			// 	case PathfinderAlgorithm.AStar:
-			// 		// Call the A* method here
-			// 		_currentPath = Level.Current.Pathfinder.AStar(GlobalPosition, _targetNode.GlobalPosition);
-			// 		break;
-			// 	default:
-			// 		GD.Print("No pathfinding algorithm selected.");
-			// 		break;
-			// }
+			switch (_algorithm)
+			{
+				case PathfinderAlgorithm.BreadthFirstSearch:
+					// Call the Breadth First Search method here
+					_currentPath = Level.Current.Pathfinder.BreadthFirstSearch(GlobalPosition, _targetNode.GlobalPosition);
+					break;
+				case PathfinderAlgorithm.Dijkstra:
+					// Call the Dijkstra method here
+					_currentPath = Level.Current.Pathfinder.Dijkstra(GlobalPosition, _targetNode.GlobalPosition);
+					break;
+				// case PathfinderAlgorithm.AStar:
+				// 	// Call the A* method here
+				// 	_currentPath = Level.Current.Pathfinder.AStar(GlobalPosition, _targetNode.GlobalPosition);
+				// 	break;
+				default:
+					GD.Print("No pathfinding algorithm selected.");
+					break;
+			}
 			stopwatch.Stop();
 			GD.Print($"Pathfinding took {stopwatch.ElapsedMilliseconds} ms");
 		}

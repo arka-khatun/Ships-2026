@@ -191,6 +191,33 @@ namespace GA.Ships.Pathfinding
 			return neighbours;
 		}
 
+		public int GetCostToNeighbour(Cell source, Cell destination)
+		{
+			if (source == null || destination == null ||
+				!source.IsWalkable || !destination.IsWalkable)
+			{
+				return -1;
+			}
+
+			if (source.X == destination.X && source.Y == destination.Y)
+			{
+				// Source and destination are the same point.
+				return 0;
+			}
+
+			int xDistance = Mathf.Abs(source.X - destination.X);
+			int yDistance = Mathf.Abs(source.Y - destination.Y);
+			if (xDistance > 1 || yDistance > 1)
+			{
+				// Cells are not neighbours.
+				return -1;
+			}
+
+			// Diagonal distance is approximately 1,4 times the axial distance.
+			int multiplier = (xDistance == 1 && yDistance == 1) ? 14 : 10;
+			return destination.Cost * multiplier;
+		}
+
 		#region Debug draw
 		private void RefreshDebugGrid()
 		{
@@ -287,6 +314,31 @@ namespace GA.Ships.Pathfinding
 			public int Cost { get; set; }
 			public bool IsWalkable => Cost >= 0;
 
+			/// <summary>
+			/// The reference to the node from where we can reach this node.
+			/// Used by Dijkstra and A*.
+			/// </summary>
+			public Cell Parent { get; set; }
+
+			/// <summary>
+			/// Graph Cost.
+			/// The total cost of the path so far (until this node).
+			/// </summary>
+			public int GCost { get; set; }
+
+			/// <summary>
+			/// Heuristic Cost.
+			/// The estimated cost from this node to the end node.
+			/// Used by A*.
+			/// </summary>
+			public int HCost { get; set; }
+
+			/// <summary>
+			/// Full Cost.
+			/// Total (estimated) cost of the path.
+			/// </summary>
+			public int FCost => GCost + HCost;
+
 			public Cell(int x, int y, Vector3 worldPosition, int cost)
 			{
 				X = x;
@@ -297,7 +349,12 @@ namespace GA.Ships.Pathfinding
 
 			public int CompareTo(Cell other)
 			{
-				throw new NotImplementedException();
+				if (other == null)
+				{
+					return -1;
+				}
+
+				return this.FCost - other.FCost;
 			}
 		}
 	}

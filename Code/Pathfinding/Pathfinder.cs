@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
+using GA.Collections;
 using Cell = GA.Ships.Pathfinding.NavigationGrid.Cell;
 
 namespace GA.Ships.Pathfinding
@@ -10,11 +11,18 @@ namespace GA.Ships.Pathfinding
 	{
 		private NavigationGrid _grid = null;
 
+		// Cells, which will be inspected.
+		private PriorityQueue<Cell> _frontier = new PriorityQueue<Cell>();
+
+		// Cells which has been inspected already.
+		private HashSet<Cell> _visited = new HashSet<Cell>();
+
 		public Pathfinder(NavigationGrid grid)
 		{
 			_grid = grid;
 		}
 
+		#region Breadth-First Search
 		/// <summary>
 		/// Performs a breadth-first search to find a path from the start position to the end position.
 		/// Link: https://en.wikipedia.org/wiki/Breadth-first_search
@@ -128,5 +136,116 @@ namespace GA.Ships.Pathfinding
 
 			return path;
 		}
+
+		#endregion
+
+		#region Dijkstra's Algorithm
+		/// <summary>
+		/// Performs Dijkstra's algorithm to find the shortest path from the start position to the end position.
+		/// Link: https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
+		/// </summary>
+		/// <param name="startPosition">Start position</param>
+		/// <param name="endPosition">End position</param>
+		/// <returns>List of nodes representing the path, or null if no path is found</returns>
+		public IList<Vector3> Dijkstra(Vector3 startPosition, Vector3 endPosition)
+		{
+			Cell startCell = _grid.GetCell(startPosition);
+			Cell endCell = _grid.GetCell(endPosition);
+
+			if (startCell == null || endCell == null || startCell == endCell ||
+				!startCell.IsWalkable || !endCell.IsWalkable)
+			{
+				// Early exit in case there is no valid path possible.
+				return null;
+			}
+
+			_frontier.Clear();
+			_visited.Clear();
+
+			startCell.Parent = null;
+			startCell.GCost = 0; // At the beginning the cost is 0. We haven't travelled anywhere yet.
+			startCell.HCost = 0; // Has to be zeroed if A* was used between two Dijkstra calls.
+
+			_frontier.Enqueue(startCell);
+
+			while (_frontier.Count > 0)
+			{
+				Cell current = _frontier.Dequeue();
+				_visited.Add(current);
+
+				if (current == endCell)
+				{
+					// Early exit.
+					// We have reached the end node. No need to continue.
+					break;
+				}
+
+				IList<Cell> neighbours = _grid.GetNeighbours(current, PathfindingConfig.AllowDiagonalPathfinding);
+				foreach (Cell neighbour in neighbours)
+				{
+					if (!neighbour.IsWalkable || _visited.Contains(neighbour))
+					{
+						// Skip this neighbour if it's not walkable or if it has been already visited.
+						continue;
+					}
+
+					int costToNeighbour = _grid.GetCostToNeighbour(current, neighbour);
+					if (costToNeighbour <= 0)
+					{
+						// The neighbour is not a neighbour of the current node.
+						GD.PrintErr("Invalid cost to the neighbour! Did GetNeighbours return a Node " +
+											"which is not a neighbour?");
+						continue;
+					}
+
+					// The total cost of the path so far.
+					int costSoFar = current.GCost + costToNeighbour;
+					if (!_frontier.Contains(neighbour) // The neighbour hasn't been inspected yet
+						|| costSoFar < neighbour.GCost) // or there is a better path to the neighbour.
+					{
+						// Update the cost to the neighbour from current node
+						neighbour.GCost = costSoFar;
+						neighbour.HCost = 0;
+
+						// Add to the frontier in order to process its neighbours.
+						_frontier.Enqueue(neighbour);
+
+						// It's cheapest to navigate to this neighbour from the current node.
+						neighbour.Parent = current;
+					}
+				}
+			}
+
+			return RetracePath(startCell, endCell);
+		}
+
+
+		#endregion
+
+		#region Common
+		private IList<Vector3> RetracePath(Cell startCell, Cell endCell)
+		{
+			IList<Vector3> path = new List<Vector3>();
+
+			Cell current = endCell;
+			bool isValid = true;
+
+			while (current != startCell && (isValid = current != null))
+			{
+				path.Add(current.WorldPosition);
+				current = current.Parent;
+			}
+
+			if (!isValid)
+			{
+				// The path is invalid. The end node was not reached.
+				return null;
+			}
+
+			path.Reverse();
+
+			return path;
+		}
+		#endregion
 	}
 }
