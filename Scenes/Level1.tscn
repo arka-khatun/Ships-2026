@@ -11,8 +11,8 @@
 [ext_resource type="PackedScene" uid="uid://dal2ry4e6ijio" path="res://Scenes/LevelObjects/Rock2.tscn" id="8_6jj8j"]
 [ext_resource type="PackedScene" uid="uid://gb82qf7sjrcg" path="res://Scenes/LevelObjects/Rock3.tscn" id="9_06um6"]
 [ext_resource type="Script" uid="uid://dw0x1ywrm177y" path="res://Code/Pathfinding/NavigationGrid.cs" id="10_bdlbp"]
-[ext_resource type="Script" uid="uid://dfgn7obpkuywd" path="res://Code/Pathfinding/Testing/PathfindingDistance.cs" id="12_rpty4"]
 [ext_resource type="PackedScene" uid="uid://bi28idaw4k43y" path="res://Art/Models/GLB format/grass-patch.glb" id="12_6jj8j"]
+[ext_resource type="Script" uid="uid://dfgn7obpkuywd" path="res://Code/Pathfinding/Testing/PathfindingDistance.cs" id="12_rpty4"]
 [ext_resource type="Script" uid="uid://ftx3scowqqc5" path="res://Code/Pathfinding/NavigationObject.cs" id="13_06um6"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_3vykb"]
@@ -531,7 +531,7 @@ debug_color = Color(14.525561, 12.130976, 0, 0.85882354)
 
 [node name="NavigationObject" type="Node3D" parent="Shallow1" unique_id=1361133172]
 script = ExtResource("13_06um6")
-MovementCost = 5
+MovementCost = 2
 Priority = 10
 
 [node name="Shallow2" type="Area3D" parent="." unique_id=1239528311]

@@ -86,7 +86,7 @@ namespace GA.Ships.Pathfinding
 				isEndReached = distance >= maxSteps;
 				if (isEndReached)
 				{
-					// The end node is reached. Path is complete.
+					// Max. distance is reached. Path is complete.
 					break;
 				}
 
