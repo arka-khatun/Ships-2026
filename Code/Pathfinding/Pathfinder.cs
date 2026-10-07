@@ -68,6 +68,51 @@ namespace GA.Ships.Pathfinding
 			return null;
 		}
 
+		public IList<Cell> GetReachableCells(Cell start, int maxSteps, bool includeDiagonal)
+		{
+			Queue<Cell> frontier = new Queue<Cell>();
+			Dictionary<Cell, (Cell, int)> cameFrom = new Dictionary<Cell, (Cell, int)>();
+
+			frontier.Enqueue(start);
+			cameFrom[start] = (null, 0);
+
+			bool isEndReached = false;
+
+			while (frontier.Count > 0)
+			{
+				Cell current = frontier.Dequeue();
+				int distance = cameFrom[current].Item2;
+
+				isEndReached = distance >= maxSteps;
+				if (isEndReached)
+				{
+					// The end node is reached. Path is complete.
+					break;
+				}
+
+				IList<Cell> neighbours = _grid.GetNeighbours(current, includeDiagonal: includeDiagonal);
+				foreach (Cell neighbour in neighbours)
+				{
+					if (neighbour.IsWalkable && !cameFrom.ContainsKey(neighbour))
+					{
+						frontier.Enqueue(neighbour);
+						cameFrom[neighbour] = (current, distance + 1);
+					}
+				}
+			}
+
+			HashSet<Cell> validCells = new HashSet<Cell>();
+			foreach (var kvp in cameFrom)
+			{
+				if (kvp.Key != start)
+				{
+					validCells.Add(kvp.Key);
+				}
+			}
+
+			return validCells.ToList();
+		}
+
 		private IList<Vector3> ConstructPath(Cell startCell, Cell endCell, Dictionary<Cell, Cell> cameFrom)
 		{
 			IList<Vector3> path = new List<Vector3>();
