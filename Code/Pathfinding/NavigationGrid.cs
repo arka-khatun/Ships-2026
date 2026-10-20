@@ -127,7 +127,8 @@ namespace GA.Ships.Pathfinding
 				}
 			}
 
-			return cost;
+			// Walkable cells must cost at least 1 to keep the A* heuristic admissible.
+			return cost < 0 ? cost : Mathf.Max(cost, 1);
 		}
 
 		/// <summary>
@@ -181,6 +182,14 @@ namespace GA.Ships.Pathfinding
 					}
 
 					Cell neighbour = _cells[candidateX, candidateY];
+					bool isDiagonal = offsetX != 0 && offsetY != 0;
+					if (isDiagonal &&
+						(!_cells[cell.X + offsetX, cell.Y].IsWalkable || !_cells[cell.X, cell.Y + offsetY].IsWalkable))
+					{
+						// No corner cutting between blocked cells.
+						continue;
+					}
+
 					if (neighbour.IsWalkable)
 					{
 						neighbours.Add(neighbour);
@@ -216,6 +225,21 @@ namespace GA.Ships.Pathfinding
 			// Diagonal distance is approximately 1,4 times the axial distance.
 			int multiplier = (xDistance == 1 && yDistance == 1) ? 14 : 10;
 			return destination.Cost * multiplier;
+		}
+
+		public void ResetPathData()
+		{
+			if (_cells == null || _cells.Length == 0)
+			{
+				return;
+			}
+
+			foreach (Cell cell in _cells)
+			{
+				cell.Parent = null;
+				cell.GCost = int.MaxValue;
+				cell.HCost = 0;
+			}
 		}
 
 		#region Debug draw
@@ -337,7 +361,7 @@ namespace GA.Ships.Pathfinding
 			/// Full Cost.
 			/// Total (estimated) cost of the path.
 			/// </summary>
-			public int FCost => GCost + HCost;
+			public int FCost => GCost == int.MaxValue ? int.MaxValue : GCost + HCost;
 
 			public Cell(int x, int y, Vector3 worldPosition, int cost)
 			{
