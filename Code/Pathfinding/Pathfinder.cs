@@ -172,50 +172,50 @@ namespace GA.Ships.Pathfinding
 			return reachable;
 		}
 
-		public IList<Cell> GetReachableCells(Cell start, int maxSteps, bool includeDiagonal)
-		{
-			Queue<Cell> frontier = new Queue<Cell>();
-			Dictionary<Cell, (Cell, int)> cameFrom = new Dictionary<Cell, (Cell, int)>();
-
-			frontier.Enqueue(start);
-			cameFrom[start] = (null, 0);
-
-			bool isEndReached = false;
-
-			while (frontier.Count > 0)
-			{
-				Cell current = frontier.Dequeue();
-				int distance = cameFrom[current].Item2;
-
-				isEndReached = distance >= maxSteps;
-				if (isEndReached)
-				{
-					// Max. distance is reached. Path is complete.
-					break;
-				}
-
-				IList<Cell> neighbours = _grid.GetNeighbours(current, includeDiagonal: includeDiagonal);
-				foreach (Cell neighbour in neighbours)
-				{
-					if (neighbour.IsWalkable && !cameFrom.ContainsKey(neighbour))
-					{
-						frontier.Enqueue(neighbour);
-						cameFrom[neighbour] = (current, distance + 1);
-					}
-				}
-			}
-
-			HashSet<Cell> validCells = new HashSet<Cell>();
-			foreach (var kvp in cameFrom)
-			{
-				if (kvp.Key != start)
-				{
-					validCells.Add(kvp.Key);
-				}
-			}
-
-			return validCells.ToList();
-		}
+		// public IList<Cell> GetReachableCells(Cell start, int maxSteps, bool includeDiagonal)
+		// {
+		// 	Queue<Cell> frontier = new Queue<Cell>();
+		// 	Dictionary<Cell, (Cell, int)> cameFrom = new Dictionary<Cell, (Cell, int)>();
+		//
+		// 	frontier.Enqueue(start);
+		// 	cameFrom[start] = (null, 0);
+		//
+		// 	bool isEndReached = false;
+		//
+		// 	while (frontier.Count > 0)
+		// 	{
+		// 		Cell current = frontier.Dequeue();
+		// 		int distance = cameFrom[current].Item2;
+		//
+		// 		isEndReached = distance >= maxSteps;
+		// 		if (isEndReached)
+		// 		{
+		// 			// Max. distance is reached. Path is complete.
+		// 			break;
+		// 		}
+		//
+		// 		IList<Cell> neighbours = _grid.GetNeighbours(current, includeDiagonal: includeDiagonal);
+		// 		foreach (Cell neighbour in neighbours)
+		// 		{
+		// 			if (neighbour.IsWalkable && !cameFrom.ContainsKey(neighbour))
+		// 			{
+		// 				frontier.Enqueue(neighbour);
+		// 				cameFrom[neighbour] = (current, distance + 1);
+		// 			}
+		// 		}
+		// 	}
+		//
+		// 	HashSet<Cell> validCells = new HashSet<Cell>();
+		// 	foreach (var kvp in cameFrom)
+		// 	{
+		// 		if (kvp.Key != start)
+		// 		{
+		// 			validCells.Add(kvp.Key);
+		// 		}
+		// 	}
+		//
+		// 	return validCells.ToList();
+		// }
 
 		private IList<Vector3> ConstructPath(Cell startCell, Cell endCell, Dictionary<Cell, Cell> cameFrom)
 		{
@@ -238,11 +238,28 @@ namespace GA.Ships.Pathfinding
 		#region Dijkstra's Algorithm
 		/// <summary>
 		/// Performs Dijkstra's algorithm to find the shortest path from the start position to the end position.
+		/// Finds every cell that can be reached from <paramref name="start"/> by spending at most
+		/// <paramref name="maxMovementPoints"/> movement points (a terrain-aware movement range.)
+		/// Moving into a cell costs that cell's Cost. The start cell is not included in the result
+		/// and its cost is not charged. The algorithm doesn't contain an early exit, so every cell whose
+		/// cheapest route fits the budget is returned, even if that route takes more steps than a more
+		/// expensive one. Non-walkable cells are never entered.
+		/// A diagonal move costs the same as an axial one (the cost of the cell entered). Diagonals are used
+		/// only if <paramref name="useDiagonals"/> is true and PathfindingConfig.AllowDiagonalPathfinding is enabled.
 		/// Link: https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
 		/// </summary>
 		/// <param name="startPosition">Start position</param>
 		/// <param name="endPosition">End position</param>
+		/// <param name="start">The cell where the movement starts. Must be walkable.</param>
+		/// <param name="maxMovementPoints">The movement point budget. 0 returns an empty list.</param>
+		/// <param name="useDiagonals">True to allow diagonal moves.</param>
 		/// <returns>List of nodes representing the path, or null if no path is found</returns>
+		/// <exception cref="ArgumentNullException"><paramref name="start"/> is null.</exception>
+		/// <exception cref="ArgumentOutOfRangeException"><paramref name="maxMovementPoints"/> is negative.</exception>
+		/// <exception cref="ArgumentException">
+		/// <paramref name="start"/> is outside the navigation grid or is not walkable.
+		/// </exception>
+
 		public IList<Vector3> Dijkstra(Vector3 startPosition, Vector3 endPosition)
 		{
 			Cell startCell = _grid.GetCell(startPosition);
@@ -319,6 +336,82 @@ namespace GA.Ships.Pathfinding
 			}
 
 			return RetracePath(startCell, endCell);
+		}
+		
+		public IList<Cell> GetReachableCells(Cell start, int maxMovementPoints, bool useDiagonals)
+		{
+			if (start == null)
+			{
+				throw new ArgumentNullException(nameof(start));
+			}
+
+			if (maxMovementPoints < 0)
+			{
+				throw new ArgumentOutOfRangeException(nameof(maxMovementPoints), maxMovementPoints,
+					"The movement point budget cannot be negative.");
+			}
+
+			if (start.X < 0 || start.Y < 0 || start.X >= _grid.Width || start.Y >= _grid.Height)
+			{
+				throw new ArgumentException("The start cell is not inside the navigation grid.", nameof(start));
+			}
+
+			if (!start.IsWalkable)
+			{
+				throw new ArgumentException("The start cell is not walkable.", nameof(start));
+			}
+
+			// This is a read-only query, so it uses local state. The shared _frontier and _visited fields
+			// and the per-cell GCost/Parent data belong to Dijkstra and A*, and are left untouched.
+			PriorityQueue<FrontierEntry> frontier = new PriorityQueue<FrontierEntry>();
+
+			// The cheapest known total cost to each discovered cell.
+			Dictionary<Cell, int> bestCost = new Dictionary<Cell, int>();
+			IList<Cell> reachable = new List<Cell>();
+
+			frontier.Enqueue(new FrontierEntry(start, 0));
+			bestCost[start] = 0;
+
+			while (frontier.Count > 0)
+			{
+				FrontierEntry entry = frontier.Dequeue();
+				Cell current = entry.Cell;
+
+				if (entry.TotalCost > bestCost[current])
+				{
+					// Outdated entry. A cheaper route to this cell was already processed.
+					continue;
+				}
+
+				if (current != start)
+				{
+					// The cheapest route to this cell is now final, and it fits the budget.
+					reachable.Add(current);
+				}
+
+				int remainingPoints = maxMovementPoints - entry.TotalCost;
+
+				IList<Cell> neighbours = _grid.GetNeighbours(current, includeDiagonal: useDiagonals);
+				foreach (Cell neighbour in neighbours)
+				{
+					// Compare against the remaining points instead of adding to the total,
+					// so a huge budget cannot overflow. The walkable check also keeps
+					// negative costs out of the cost calculation.
+					if (!neighbour.IsWalkable || neighbour.Cost > remainingPoints)
+					{
+						continue;
+					}
+
+					int newCost = entry.TotalCost + neighbour.Cost;
+					if (!bestCost.TryGetValue(neighbour, out int knownCost) || newCost < knownCost)
+					{
+						bestCost[neighbour] = newCost;
+						frontier.Enqueue(new FrontierEntry(neighbour, newCost));
+					}
+				}
+			}
+
+			return reachable;
 		}
 
 		#region A*
