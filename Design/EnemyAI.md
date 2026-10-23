@@ -144,13 +144,13 @@ A tree of nodes evaluated from the root each tick. Typical nodes:
 
 ```mermaid
 flowchart TD
-    Root[Selector] --> A[Sequence: Attack]
-    Root --> B[Sequence: Chase]
-    Root --> C[Patrol]
-    A --> A1{In attack range?}
-    A --> A2[Fire weapon]
-    B --> B1{Player detected?}
-    B --> B2[Move to player]
+	Root[Selector] --> A[Sequence: Attack]
+	Root --> B[Sequence: Chase]
+	Root --> C[Patrol]
+	A --> A1{In attack range?}
+	A --> A2[Fire weapon]
+	B --> B1{Player detected?}
+	B --> B2[Move to player]
 ```
 
 Behaviour trees scale to large behaviours better than flat FSMs and are reusable, which is why they are common in AAA games. The price is more machinery and a different way of thinking: they are about priorities, not about "being in" a mode.
